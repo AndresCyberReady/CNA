@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="results-card">
+
+            {% if passed %}
+            <div class="result-header passed">
+                <h1>// ACCESS GRANTED</h1>
+                <p class="result-status">EXAM PASSED</p>
+            </div>
+            {% else %}
+            <div class="result-header failed">
+                <h1>// ACCESS DENIED</h1>
+                <p class="result-status">EXAM FAILED</p>
+            </div>
+            {% endif %}
+
+            <!-- Score + Time row -->
+            <div class="score-time-row">
+                <div class="score-circle {{ 'passed-circle' if passed else 'failed-circle' }}">
+                    <div class="score-inner">
+                        <span class="score-number">{{ "%.1f"|format(score) }}%</span>
+                        <span class="score-label">SCORE</span>
+                    </div>
+                </div>
+                <div class="time-circle">
+                    <div class="score-inner">
+                        <span class="score-number time-number">{{ time_display }}</span>
+                        <span class="score-label">TIME</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="score-details">
+                <p><strong>Correct:</strong> {{ correct }} / {{ total }}</p>
+            </div>
+
+            <!-- Leaderboard entry -->
+            <div class="leaderboard-entry-section">
+                <p class="lb-prompt">// ENTER YOUR CALLSIGN TO SAVE YOUR SCORE</p>
+                <form method="POST" action="{{ url_for('save_score') }}" class="callsign-form">
+                    <input
+                        type="text"
+                        name="username"
+                        id="username"
+                        class="callsign-input"
+                        maxlength="3"
+                        minlength="1"
+                        placeholder="AAA"
+                        autocomplete="off"
+                        required
+                    >
+                    <button type="submit" class="start-btn save-btn">Save Score</button>
+                </form>
+            </div>
+
+            <!-- Leaderboard preview -->
+            {% if leaderboard %}
+            <div class="leaderboard-preview">
+                <h3 class="lb-title">// LEADERBOARD</h3>
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                            <th>Exam</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in leaderboard %}
+                        <tr>
+                            <td class="lb-rank">{{ loop.index }}</td>
+                            <td class="lb-name">{{ entry.username }}</td>
+                            <td class="lb-score">{{ entry.score }}%</td>
+                            <td class="lb-time">{{ "%02d:%02d" | format(entry.time // 60, entry.time % 60) }}</td>
+                            <td class="lb-type">{{ entry.exam_type }}</td>
+                            <td class="lb-date">{{ entry.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Answer review -->
+            <div class="review-section">
+                <h2>// Answer Review</h2>
+                {% for result in question_results %}
+                <div class="review-question {{ 'correct-answer' if result.is_correct else 'incorrect-answer' }}">
+                    <div class="review-header">
+                        <span class="question-number-small">Q{{ loop.index }}</span>
+                        {% if result.is_correct %}
+                        <span class="result-icon correct-icon">✓</span>
+                        {% else %}
+                        <span class="result-icon incorrect-icon">✗</span>
+                        {% endif %}
+                    </div>
+                    <p class="question-text-small">{{ result.question }}</p>
+                    <div class="answer-comparison">
+                        <div class="answer-box correct-box">
+                            <strong>Correct:</strong> {{ result.correct_answer }}
+                        </div>
+                        {% if not result.is_correct %}
+                        <div class="answer-box your-box">
+                            <strong>Your Answer:</strong> {{ result.user_answer }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="return-section">
+                <a href="{{ url_for('index') }}" class="return-btn">// Return to Menu</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Auto-uppercase + limit to 3 alpha chars
+        const input = document.getElementById('username');
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 3);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network+ & Security+ Certification Exam</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-card">
+            <h1>Network+ & Security+ Certification Exam</h1>
+            <p class="subtitle">Test your knowledge in network security and cybersecurity</p>
+            
+            <div class="exam-info">
+                <div class="info-item">
+                    <span class="icon">📚</span>
+                    <span><strong>Topics:</strong> Network+, Security+</span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">❓</span>
+                    <span><strong>Questions:</strong> {{ exam_size }} randomly selected</span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">⏱️</span>
+                    <span><strong>Timing:</strong> No time limit</span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">✅</span>
+                    <span><strong>Passing Score:</strong> 70%</span>
+                </div>
+            </div>
+            
+            <div class="exam-buttons">
+                <form method="POST" action="{{ url_for('start_exam') }}">
+                    <button type="submit" class="start-btn">Start Exam</button>
+                </form>
+                <form method="POST" action="{{ url_for('start_full_exam') }}">
+                    <button type="submit" class="start-btn full-exam-btn">Full Exam ({{ full_exam_size }} Questions)</button>
+                </form>
+            </div>
+
+            <div class="exam-section-divider">
+                <span>Penetration Testing</span>
+            </div>
+
+            <div class="exam-buttons">
+                <form method="POST" action="{{ url_for('start_pentest_exam') }}">
+                    <button type="submit" class="start-btn pentest-btn">PenTest+ Exam ({{ pentest_exam_size }} Questions)</button>
+                </form>
+            </div>
+
+            <div class="exam-section-divider"><span>Records</span></div>
+
+            <a href="{{ url_for('leaderboard') }}" class="start-btn leaderboard-btn">// View Leaderboard</a>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="results-card">
+            <h2 class="lb-page-title">// TOP SCORES</h2>
+            <p class="subtitle">Hall of Fame — Top 20</p>
+
+            {% if entries %}
+            <table class="lb-table lb-table-full">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                        <th>Correct</th>
+                        <th>Time</th>
+                        <th>Exam</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr class="{{ 'lb-top-row' if loop.index <= 3 else '' }}">
+                        <td class="lb-rank">
+                            {% if loop.index == 1 %}#1
+                            {% elif loop.index == 2 %}#2
+                            {% elif loop.index == 3 %}#3
+                            {% else %}{{ loop.index }}{% endif %}
+                        </td>
+                        <td class="lb-name">{{ entry.username }}</td>
+                        <td class="lb-score">{{ entry.score }}%</td>
+                        <td class="lb-correct">{{ entry.correct }}/{{ entry.total }}</td>
+                        <td class="lb-time">{{ "%02d:%02d" | format(entry.time // 60, entry.time % 60) }}</td>
+                        <td class="lb-type">{{ entry.exam_type }}</td>
+                        <td class="lb-date">{{ entry.date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-scores">No scores recorded yet. Be the first!</p>
+            {% endif %}
+
+            <div class="return-section" style="margin-top: 30px;">
+                <a href="{{ url_for('index') }}" class="return-btn">// Return to Menu</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
