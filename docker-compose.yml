@@ -1,0 +1,26 @@
+# Portainer-friendly stack file.
+# In Portainer: Stacks -> Add stack -> paste this YAML (or point at the repo),
+# then set the SECRET_KEY environment variable in the UI before deploying.
+services:
+  cna:
+    build: .
+    image: cna-exam:latest
+    container_name: cna-exam
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      # REQUIRED in production: generate with `python -c "import secrets; print(secrets.token_hex(32))"`
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-portainer}
+      DATA_DIR: /app/data
+    volumes:
+      - cna-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5000/', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  cna-data:

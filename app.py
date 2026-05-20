@@ -6,7 +6,17 @@ import os
 from datetime import datetime
 from werkzeug.exceptions import BadRequestKeyError
 
-LEADERBOARD_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'leaderboard.json')
+# Data location is overridable via env so Docker volumes can mount
+# a persistent directory (e.g. /app/data) without code changes.
+_DATA_DIR = os.environ.get(
+    'DATA_DIR',
+    os.path.dirname(os.path.abspath(__file__))
+)
+os.makedirs(_DATA_DIR, exist_ok=True)
+LEADERBOARD_FILE = os.environ.get(
+    'LEADERBOARD_FILE',
+    os.path.join(_DATA_DIR, 'leaderboard.json')
+)
 
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_FILE):
@@ -35,11 +45,16 @@ def add_leaderboard_entry(username, score, correct, total, elapsed_seconds, exam
     return entries
 
 app = Flask(__name__)
-# Use a fixed secret key so sessions persist across restarts
-app.secret_key = 'exam-app-secret-key-2024-production-change-me'
+# Use a fixed secret key so sessions persist across restarts.
+# In production (e.g. Docker/Portainer), set SECRET_KEY as an env var.
+app.secret_key = os.environ.get('SECRET_KEY', 'exam-app-secret-key-2024-production-change-me')
 
 # Configure server-side sessions
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = os.environ.get(
+    'SESSION_FILE_DIR',
+    os.path.join(_DATA_DIR, 'flask_session')
+)
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
