@@ -13,33 +13,109 @@ A Python web application built with Flask that provides a comprehensive exam for
 
 ## Installation
 
+You can run the application in one of three ways:
+
+1. [Docker Compose / Portainer](#docker-deployment-recommended) (recommended for any deployment)
+2. [Plain Docker](#plain-docker)
+3. [Local Python](#local-python-development)
+
+---
+
+## Docker Deployment (Recommended)
+
 ### Prerequisites
 
-- Python 3.7 or higher
-- pip (Python package manager)
+- Docker Engine 20.10+ (and Docker Compose v2), or [Portainer](https://www.portainer.io/) connected to a Docker host
+
+### Quick start (Docker Compose)
+
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd CNA
+   ```
+
+2. Generate a strong secret key and put it in a `.env` file next to `docker-compose.yml`:
+   ```bash
+   echo "SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')" > .env
+   ```
+
+3. Build and start the stack:
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. Open <http://localhost:5000>.
+
+To stop the stack: `docker compose down` (data in the `cna-data` volume is preserved).
+To wipe data as well: `docker compose down -v`.
+
+### Deploying on Portainer.io
+
+1. Push this repository to a git remote your Portainer instance can reach (or use the **Web editor** option and paste the contents of `docker-compose.yml`).
+2. In Portainer: **Stacks → Add stack**.
+3. Pick **Repository** and point at your fork (or **Web editor** and paste the compose file).
+4. Under **Environment variables**, add:
+   - `SECRET_KEY` — a strong random string (`python -c "import secrets; print(secrets.token_hex(32))"`)
+5. Click **Deploy the stack**. The app is reachable on port `5000` of the Docker host.
+
+The stack defines a named volume `cna-data` that persists the leaderboard and session files across container recreations.
+
+### Configuration (environment variables)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SECRET_KEY` | hardcoded dev value | Flask session signing key. **Always override in production.** |
+| `DATA_DIR` | `/app/data` (in container) | Base directory for mutable state |
+| `LEADERBOARD_FILE` | `$DATA_DIR/leaderboard.json` | Leaderboard storage path |
+| `SESSION_FILE_DIR` | `$DATA_DIR/flask_session` | Flask-Session storage path |
+
+### Plain Docker
+
+If you'd rather skip Compose:
+
+```bash
+docker build -t cna-exam:latest .
+docker volume create cna-data
+docker run -d \
+  --name cna-exam \
+  -p 5000:5000 \
+  -e SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')" \
+  -v cna-data:/app/data \
+  --restart unless-stopped \
+  cna-exam:latest
+```
+
+---
+
+## Local Python (Development)
+
+### Prerequisites
+
+- Python 3.10 or higher (tested on 3.12)
+- pip
 
 ### Setup
 
-1. Clone or download this repository
+1. (Optional but recommended) create a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate    # on Windows: venv\Scripts\activate
+   ```
 
-2. Install required dependencies:
-```bash
-pip install -r requirements.txt
-```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Running the Application
+3. Start the Flask dev server:
+   ```bash
+   python app.py
+   ```
 
-1. Start the Flask server:
-```bash
-python app.py
-```
+4. Open <http://localhost:5000> and click **Start Exam**.
 
-2. Open your web browser and navigate to:
-```
-http://localhost:5000
-```
-
-3. Click "Start Exam" to begin your test
+> The dev server (`app.run`) is single-threaded and is **not** suitable for production. The Docker image uses Gunicorn instead.
 
 ## How It Works
 
@@ -72,13 +148,18 @@ http://localhost:5000
 
 ## Security Note
 
-**Important**: Change the `secret_key` in `app.py` before deploying to production:
+**Important**: Always override the secret key in production by setting the `SECRET_KEY` environment variable. The hardcoded fallback in `app.py` is for local development only.
 
-```python
-app.secret_key = 'your-secret-key-change-this-in-production'
+Generate one with:
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-For production, use a strong, randomly generated secret key.
+For Docker / Portainer deployments, set `SECRET_KEY` in the stack's environment variables (see [Docker Deployment](#docker-deployment-recommended)). For local runs, you can export it before starting:
+```bash
+export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+python app.py
+```
 
 ## Customization
 
@@ -117,22 +198,28 @@ passed = score >= 80  # Change 70 to desired percentage
 ```
 CNA/
 ├── app.py                 # Main Flask application
-├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── templates/            # HTML templates
-│   ├── index.html        # Welcome/start page
-│   ├── exam.html         # Exam interface
-│   └── results.html      # Results page
-└── static/               # Static assets
-    └── style.css         # Stylesheet
+├── requirements.txt       # Python dependencies (Flask, Flask-Session, Gunicorn)
+├── Dockerfile             # Container image (Python 3.12-slim + Gunicorn)
+├── docker-compose.yml     # Portainer / Docker Compose stack definition
+├── .dockerignore          # Build-context exclusions
+├── README.md              # This file
+├── leaderboard.json       # Local-dev leaderboard store (Docker uses a volume)
+├── templates/             # HTML templates
+│   ├── index.html         # Welcome/start page
+│   ├── exam.html          # Exam interface
+│   ├── results.html       # Results page
+│   └── leaderboard.html   # Leaderboard view
+└── static/                # Static assets (CSS, etc.)
 ```
 
 ## Technologies Used
 
-- **Flask**: Web framework
-- **Python**: Programming language
-- **HTML/CSS**: Frontend design
-- **Sessions**: User session management
+- **Flask 3** — web framework
+- **Flask-Session** — server-side filesystem sessions
+- **Gunicorn** — production WSGI server (used in the Docker image)
+- **Python 3.12** — runtime in the container
+- **Docker / Docker Compose** — packaging and deployment
+- **HTML / CSS** — frontend
 
 ## License
 
